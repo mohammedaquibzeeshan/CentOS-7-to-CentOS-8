@@ -1,0 +1,943 @@
+CentOS 8 has been released and most of the organizations looking forward to upgrade their existing installations of CentOS 7 based servers to CentOS 8. 
+Here, we are performing a complete upgrade of CentOS 7 to CentOS 8
+
+There are many alternate ways to upgrade your CentOS 7 based applications and databases to CentOS 8. Here, we are executing an in-place upgrade of existing CentOS 7 server 
+with installed applications and databases to the lastest versions provided by CentOS 8 server.
+
+Since you are upgrading your environment from CentOS 7 to CentOS 8, therefore, it is recommended that you should also upgrade yourself and technical resources as well.
+
+Environment Specification:
+We are using a virtual machine configured as CentOS 7 LAMP server.
+
+CPU - 3.4 Ghz (2 cores)
+Memory - 2 GB
+Storage - 20 GB
+Operating System - CentOS 7.7
+Hostname - centos-7-server.sysadminlabs.com
+IP Address - 192.168.116.215 /24
+ 
+
+Gathering System Information of CentOS 7:
+Connect with centos-7-server.sysadminlabs.com as root user by using an ssh tool like PuTTY.
+
+Check the current version of Linux Kernel.
+
+[root@centos-7-server ~]# uname -r
+3.10.0-1062.7.1.el7.x86_64
+
+Check the current version of Apache HTTP Server.
+
+[root@centos-7-server ~]# httpd -v
+Server version: Apache/2.4.6 (CentOS)
+Server built:   Aug  8 2019 11:41:18
+
+Check the current version of PHP.
+
+[root@centos-7-server ~]# php -v
+PHP 5.4.16 (cli) (built: Nov  1 2019 16:04:20)
+Copyright (c) 1997-2013 The PHP Group
+Zend Engine v2.4.0, Copyright (c) 1998-2013 Zend Technologies
+
+Check the current version of MariaDB server.
+
+[root@centos-7-server ~]# mysql -V
+mysql  Ver 15.1 Distrib 5.5.64-MariaDB, for Linux (x86_64) using readline 5.1
+
+Open URL http://centos-7-server.sysadminlabs.com in a browser.
+
+01-upgrade-centos-7-to-8-phpinfo-5
+
+ 
+
+Installing EPEL yum Repository on CentOS 7:
+We are required some packages that are available in EPEL (Extra Packages for Enterprise Linux) yum repository.
+
+Therefore, we are installing epel-release package to enable EPEL yum repository.
+
+[root@centos-7-server ~]# yum install -y epel-release.noarch
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirrors.ges.net.pk
+ * extras: mirrors.ges.net.pk
+ * updates: repo.isra.edu.pk
+Resolving Dependencies
+--> Running transaction check
+---> Package epel-release.noarch 0:7-11 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package                Arch             Version         Repository        Size
+================================================================================
+Installing:
+ epel-release           noarch           7-11            extras            15 k
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 15 k
+Installed size: 24 k
+Downloading packages:
+epel-release-7-11.noarch.rpm                               |  15 kB   00:00
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : epel-release-7-11.noarch                                     1/1
+  Verifying  : epel-release-7-11.noarch                                     1/1
+
+Installed:
+  epel-release.noarch 0:7-11
+
+Complete!
+
+Build cache for EPEL yum repository.
+
+[root@centos-7-server ~]# yum makecache fast
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+epel/x86_64/metalink                                     | 9.2 kB     00:00
+ * base: mirrors.ges.net.pk
+ * epel: my.fedora.ipserverone.com
+ * extras: mirrors.ges.net.pk
+ * updates: repo.isra.edu.pk
+base                                                     | 3.6 kB     00:00
+epel                                                     | 5.3 kB     00:00
+extras                                                   | 2.9 kB     00:00
+updates                                                  | 2.9 kB     00:00
+(1/3): epel/x86_64/group_gz                                |  90 kB   00:00
+(2/3): epel/x86_64/updateinfo                              | 1.0 MB   00:02
+(3/3): epel/x86_64/primary_db                              | 6.9 MB   00:09
+Metadata Cache Created
+
+EPEL yum repository for CentOS 7 has been installed.
+
+ 
+
+Installing Required Packages on CentOS 7:
+Execute the following command to install required packages.
+
+[root@centos-7-server ~]# yum install -y yum-utils rpmconf
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirrors.ges.net.pk
+ * epel: epel.dionipe.id
+ * extras: mirrors.ges.net.pk
+ * updates: repo.isra.edu.pk
+Package yum-utils-1.1.31-52.el7.noarch already installed and latest version
+Resolving Dependencies
+--> Running transaction check
+---> Package rpmconf.noarch 0:0.3.4-1.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package           Arch             Version                Repository      Size
+================================================================================
+Installing:
+ rpmconf           noarch           0.3.4-1.el7            epel            21 k
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 21 k
+Installed size: 45 k
+Downloading packages:
+warning: /var/cache/yum/x86_64/7/epel/packages/rpmconf-0.3.4-1.el7.noarch.rpm: Header V3 RSA/SHA256 Signature, key ID 352c64e5: NOKEY
+Public key for rpmconf-0.3.4-1.el7.noarch.rpm is not installed
+rpmconf-0.3.4-1.el7.noarch.rpm                             |  21 kB   00:06
+Retrieving key from file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+Importing GPG key 0x352C64E5:
+ Userid     : "Fedora EPEL (7) <epel@fedoraproject.org>"
+ Fingerprint: 91e9 7d7c 4a5e 96f1 7f3e 888f 6a2f aea2 352c 64e5
+ Package    : epel-release-7-11.noarch (@extras)
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : rpmconf-0.3.4-1.el7.noarch                                   1/1
+  Verifying  : rpmconf-0.3.4-1.el7.noarch                                   1/1
+
+Installed:
+  rpmconf.noarch 0:0.3.4-1.el7
+
+Complete!
+
+ 
+
+Removing Duplicate/Unused Packages and Configurations:
+Locate and remove conflicting configuration files (.rpmnew, .rpmsave and .rpmorigfiles) that have been created during installation of the new versions of respective packages.
+
+[root@centos-7-server ~]# rpmconf -a
+Configuration file `/etc/nsswitch.conf'
+-rw-r--r--. 1 root root 1746 Dec 22  2018 /etc/nsswitch.conf
+-rw-r--r--. 1 root root 1938 Aug  7 04:00 /etc/nsswitch.conf.rpmnew
+ ==> Package distributor has shipped an updated version.
+   What would you like to do about it ?  Your options are:
+    Y or I  : install the package maintainer's version
+    N or O  : keep your currently-installed version
+      D     : show the differences between the versions
+      M     : merge configuration files
+      Z     : background this process to examine the situation
+      S     : skip this file
+ The default action is to keep your current version.
+*** aliases (Y/I/N/O/D/Z/S) [default=N] ?
+Your choice:
+
+List down packages that are not relied upon by any other installed package.
+
+[root@centos-7-server ~]# package-cleanup --leaves
+Loaded plugins: fastestmirror
+bind-libs-lite-9.11.4-9.P2.el7.x86_64
+libsysfs-2.1.0-16.el7.x86_64
+
+List down older or duplicate packages that are not available in currently configured yum repositories.
+
+[root@centos-7-server ~]# package-cleanup --orphans
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirrors.ges.net.pk
+ * epel: my.fedora.ipserverone.com
+ * extras: mirrors.ges.net.pk
+ * updates: repo.isra.edu.pk
+kernel-3.10.0-957.el7.x86_64
+
+Uninstall the packages that are listed by the package-cleanup command.
+
+[root@centos-7-server ~]# yum remove -y \
+> bind-libs-lite-9.11.4-9.P2.el7.x86_64 \
+> libsysfs-2.1.0-16.el7.x86_64 \
+> kernel-3.10.0-957.el7.x86_64
+Loaded plugins: fastestmirror
+Resolving Dependencies
+--> Running transaction check
+---> Package bind-libs-lite.x86_64 32:9.11.4-9.P2.el7 will be erased
+---> Package kernel.x86_64 0:3.10.0-957.el7 will be erased
+---> Package libsysfs.x86_64 0:2.1.0-16.el7 will be erased
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package             Arch        Version                   Repository      Size
+================================================================================
+Removing:
+ bind-libs-lite      x86_64      32:9.11.4-9.P2.el7        @base          2.9 M
+ kernel              x86_64      3.10.0-957.el7            @anaconda       63 M
+ libsysfs            x86_64      2.1.0-16.el7              @anaconda      146 k
+
+Transaction Summary
+================================================================================
+Remove  3 Packages
+
+Installed size: 66 M
+Downloading packages:
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Erasing    : kernel-3.10.0-957.el7.x86_64                                 1/3
+  Erasing    : libsysfs-2.1.0-16.el7.x86_64                                 2/3
+  Erasing    : 32:bind-libs-lite-9.11.4-9.P2.el7.x86_64                     3/3
+  Verifying  : 32:bind-libs-lite-9.11.4-9.P2.el7.x86_64                     1/3
+  Verifying  : kernel-3.10.0-957.el7.x86_64                                 2/3
+  Verifying  : libsysfs-2.1.0-16.el7.x86_64                                 3/3
+
+Removed:
+  bind-libs-lite.x86_64 32:9.11.4-9.P2.el7    kernel.x86_64 0:3.10.0-957.el7
+  libsysfs.x86_64 0:2.1.0-16.el7
+
+Complete!
+
+ 
+
+Switch the Package Manager from YUM to DNF:
+In CentOS 8, the default package manager yum has been replaced by the dnf (Dandified Yum).
+
+Therefore, we have to switch to the dnf package manager before upgrading our CentOS 7 server.
+
+Install dnf package manager using yum command.
+
+[root@centos-7-server ~]# yum install -y dnf
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirrors.ges.net.pk
+ * epel: my.fedora.ipserverone.com
+ * extras: mirrors.ges.net.pk
+ * updates: repo.isra.edu.pk
+Resolving Dependencies
+--> Running transaction check
+---> Package dnf.noarch 0:4.0.9.2-1.el7_6 will be installed
+--> Processing Dependency: python2-dnf = 4.0.9.2-1.el7_6 for package: dnf-4.0.9.2-1.el7_6.noarch
+--> Running transaction check
+---> Package python2-dnf.noarch 0:4.0.9.2-1.el7_6 will be installed
+--> Processing Dependency: dnf-data = 4.0.9.2-1.el7_6 for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: python2-libdnf >= 0.22.5 for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: python2-libcomps >= 0.1.8 for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: python2-hawkey >= 0.22.5 for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: libmodulemd >= 1.4.0 for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: python2-libdnf for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: python-enum34 for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Processing Dependency: deltarpm for package: python2-dnf-4.0.9.2-1.el7_6.noarch
+--> Running transaction check
+---> Package deltarpm.x86_64 0:3.6-3.el7 will be installed
+---> Package dnf-data.noarch 0:4.0.9.2-1.el7_6 will be installed
+--> Processing Dependency: libreport-filesystem for package: dnf-data-4.0.9.2-1.el7_6.noarch
+---> Package libmodulemd.x86_64 0:1.6.3-1.el7 will be installed
+--> Processing Dependency: libyaml-0.so.2()(64bit) for package: libmodulemd-1.6.3-1.el7.x86_64
+---> Package python-enum34.noarch 0:1.0.4-1.el7 will be installed
+---> Package python2-hawkey.x86_64 0:0.22.5-1.el7_6 will be installed
+--> Processing Dependency: libdnf(x86-64) = 0.22.5-1.el7_6 for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+--> Processing Dependency: libsolvext.so.0(SOLV_1.0)(64bit) for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+--> Processing Dependency: libsolv.so.0(SOLV_1.0)(64bit) for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+--> Processing Dependency: libsolvext.so.0()(64bit) for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+--> Processing Dependency: libsolv.so.0()(64bit) for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+--> Processing Dependency: librepo.so.0()(64bit) for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+--> Processing Dependency: libdnf.so.2()(64bit) for package: python2-hawkey-0.22.5-1.el7_6.x86_64
+---> Package python2-libcomps.x86_64 0:0.1.8-12.el7 will be installed
+--> Processing Dependency: libcomps(x86-64) = 0.1.8-12.el7 for package: python2-libcomps-0.1.8-12.el7.x86_64
+--> Processing Dependency: libcomps.so.0.1.6()(64bit) for package: python2-libcomps-0.1.8-12.el7.x86_64
+---> Package python2-libdnf.x86_64 0:0.22.5-1.el7_6 will be installed
+--> Running transaction check
+---> Package libcomps.x86_64 0:0.1.8-12.el7 will be installed
+---> Package libdnf.x86_64 0:0.22.5-1.el7_6 will be installed
+---> Package librepo.x86_64 0:1.8.1-7.el7 will be installed
+---> Package libreport-filesystem.x86_64 0:2.1.11-43.el7.centos will be installed
+---> Package libsolv.x86_64 0:0.6.34-4.el7 will be installed
+---> Package libyaml.x86_64 0:0.1.4-11.el7_0 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package                  Arch       Version                   Repository  Size
+================================================================================
+Installing:
+ dnf                      noarch     4.0.9.2-1.el7_6           extras     357 k
+Installing for dependencies:
+ deltarpm                 x86_64     3.6-3.el7                 base        82 k
+ dnf-data                 noarch     4.0.9.2-1.el7_6           extras      51 k
+ libcomps                 x86_64     0.1.8-12.el7              extras      75 k
+ libdnf                   x86_64     0.22.5-1.el7_6            extras     533 k
+ libmodulemd              x86_64     1.6.3-1.el7               extras     141 k
+ librepo                  x86_64     1.8.1-7.el7               base        81 k
+ libreport-filesystem     x86_64     2.1.11-43.el7.centos      base        40 k
+ libsolv                  x86_64     0.6.34-4.el7              base       329 k
+ libyaml                  x86_64     0.1.4-11.el7_0            base        55 k
+ python-enum34            noarch     1.0.4-1.el7               base        52 k
+ python2-dnf              noarch     4.0.9.2-1.el7_6           extras     414 k
+ python2-hawkey           x86_64     0.22.5-1.el7_6            extras      68 k
+ python2-libcomps         x86_64     0.1.8-12.el7              extras      47 k
+ python2-libdnf           x86_64     0.22.5-1.el7_6            extras     608 k
+
+Transaction Summary
+================================================================================
+Install  1 Package (+14 Dependent packages)
+
+Total download size: 2.9 M
+Installed size: 11 M
+Downloading packages:
+(1/15): deltarpm-3.6-3.el7.x86_64.rpm                      |  82 kB   00:01
+(2/15): dnf-data-4.0.9.2-1.el7_6.noarch.rpm                |  51 kB   00:01
+(3/15): libcomps-0.1.8-12.el7.x86_64.rpm                   |  75 kB   00:01
+(4/15): librepo-1.8.1-7.el7.x86_64.rpm                     |  81 kB   00:00
+(5/15): dnf-4.0.9.2-1.el7_6.noarch.rpm                     | 357 kB   00:02
+(6/15): libyaml-0.1.4-11.el7_0.x86_64.rpm                  |  55 kB   00:00
+(7/15): libsolv-0.6.34-4.el7.x86_64.rpm                    | 329 kB   00:00
+(8/15): python-enum34-1.0.4-1.el7.noarch.rpm               |  52 kB   00:00
+(9/15): libmodulemd-1.6.3-1.el7.x86_64.rpm                 | 141 kB   00:01
+(10/15): python2-dnf-4.0.9.2-1.el7_6.noarch.rpm            | 414 kB   00:00
+(11/15): python2-libcomps-0.1.8-12.el7.x86_64.rpm          |  47 kB   00:00
+(12/15): python2-hawkey-0.22.5-1.el7_6.x86_64.rpm          |  68 kB   00:02
+(13/15): libreport-filesystem-2.1.11-43.el7.centos.x86_64. |  40 kB   00:03
+(14/15): python2-libdnf-0.22.5-1.el7_6.x86_64.rpm          | 608 kB   00:02
+(15/15): libdnf-0.22.5-1.el7_6.x86_64.rpm                  | 533 kB   00:07
+--------------------------------------------------------------------------------
+Total                                              396 kB/s | 2.9 MB  00:07
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : librepo-1.8.1-7.el7.x86_64                                  1/15
+  Installing : libsolv-0.6.34-4.el7.x86_64                                 2/15
+  Installing : libcomps-0.1.8-12.el7.x86_64                                3/15
+  Installing : python2-libcomps-0.1.8-12.el7.x86_64                        4/15
+  Installing : libreport-filesystem-2.1.11-43.el7.centos.x86_64            5/15
+  Installing : dnf-data-4.0.9.2-1.el7_6.noarch                             6/15
+  Installing : python-enum34-1.0.4-1.el7.noarch                            7/15
+  Installing : deltarpm-3.6-3.el7.x86_64                                   8/15
+  Installing : libyaml-0.1.4-11.el7_0.x86_64                               9/15
+  Installing : libmodulemd-1.6.3-1.el7.x86_64                             10/15
+  Installing : libdnf-0.22.5-1.el7_6.x86_64                               11/15
+  Installing : python2-libdnf-0.22.5-1.el7_6.x86_64                       12/15
+  Installing : python2-hawkey-0.22.5-1.el7_6.x86_64                       13/15
+  Installing : python2-dnf-4.0.9.2-1.el7_6.noarch                         14/15
+  Installing : dnf-4.0.9.2-1.el7_6.noarch                                 15/15
+  Verifying  : libsolv-0.6.34-4.el7.x86_64                                 1/15
+  Verifying  : libyaml-0.1.4-11.el7_0.x86_64                               2/15
+  Verifying  : python2-libdnf-0.22.5-1.el7_6.x86_64                        3/15
+  Verifying  : python2-libcomps-0.1.8-12.el7.x86_64                        4/15
+  Verifying  : dnf-data-4.0.9.2-1.el7_6.noarch                             5/15
+  Verifying  : deltarpm-3.6-3.el7.x86_64                                   6/15
+  Verifying  : libmodulemd-1.6.3-1.el7.x86_64                              7/15
+  Verifying  : python2-hawkey-0.22.5-1.el7_6.x86_64                        8/15
+  Verifying  : python-enum34-1.0.4-1.el7.noarch                            9/15
+  Verifying  : python2-dnf-4.0.9.2-1.el7_6.noarch                         10/15
+  Verifying  : libdnf-0.22.5-1.el7_6.x86_64                               11/15
+  Verifying  : libreport-filesystem-2.1.11-43.el7.centos.x86_64           12/15
+  Verifying  : librepo-1.8.1-7.el7.x86_64                                 13/15
+  Verifying  : libcomps-0.1.8-12.el7.x86_64                               14/15
+  Verifying  : dnf-4.0.9.2-1.el7_6.noarch                                 15/15
+
+Installed:
+  dnf.noarch 0:4.0.9.2-1.el7_6
+
+Dependency Installed:
+  deltarpm.x86_64 0:3.6-3.el7
+  dnf-data.noarch 0:4.0.9.2-1.el7_6
+  libcomps.x86_64 0:0.1.8-12.el7
+  libdnf.x86_64 0:0.22.5-1.el7_6
+  libmodulemd.x86_64 0:1.6.3-1.el7
+  librepo.x86_64 0:1.8.1-7.el7
+  libreport-filesystem.x86_64 0:2.1.11-43.el7.centos
+  libsolv.x86_64 0:0.6.34-4.el7
+  libyaml.x86_64 0:0.1.4-11.el7_0
+  python-enum34.noarch 0:1.0.4-1.el7
+  python2-dnf.noarch 0:4.0.9.2-1.el7_6
+  python2-hawkey.x86_64 0:0.22.5-1.el7_6
+  python2-libcomps.x86_64 0:0.1.8-12.el7
+  python2-libdnf.x86_64 0:0.22.5-1.el7_6
+
+Complete!
+
+Yum is not required anymore, therefore we are removing yum package manager using dnf command.
+
+[root@centos-7-server ~]# dnf remove -y yum yum-metadata-parser
+Dependencies resolved.
+================================================================================
+ Package                     Arch      Version                 Repository  Size
+================================================================================
+Removing:
+ yum                         noarch    3.4.3-163.el7.centos    @System    5.6 M
+ yum-metadata-parser         x86_64    1.1.4-10.el7            @System     57 k
+Removing dependent packages:
+ yum-plugin-fastestmirror    noarch    1.1.31-52.el7           @System     53 k
+ yum-utils                   noarch    1.1.31-52.el7           @System    337 k
+
+Transaction Summary
+================================================================================
+Remove  4 Packages
+
+Freed space: 6.0 M
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1
+  Erasing          : yum-utils-1.1.31-52.el7.noarch                         1/4
+  Erasing          : yum-plugin-fastestmirror-1.1.31-52.el7.noarch          2/4
+  Erasing          : yum-3.4.3-163.el7.centos.noarch                        3/4
+  Erasing          : yum-metadata-parser-1.1.4-10.el7.x86_64                4/4
+  Verifying        : yum-3.4.3-163.el7.centos.noarch                        1/4
+  Verifying        : yum-metadata-parser-1.1.4-10.el7.x86_64                2/4
+  Verifying        : yum-plugin-fastestmirror-1.1.31-52.el7.noarch          3/4
+  Verifying        : yum-utils-1.1.31-52.el7.noarch                         4/4
+
+Removed:
+  yum-3.4.3-163.el7.centos.noarch
+  yum-metadata-parser-1.1.4-10.el7.x86_64
+  yum-plugin-fastestmirror-1.1.31-52.el7.noarch
+  yum-utils-1.1.31-52.el7.noarch
+
+Complete!
+
+Remove any left behind yum configurations.
+
+[root@centos-7-server ~]# rm -Rf /etc/yum
+
+Build cache for dnf yum repositories.
+
+[root@centos-7-server ~]# dnf makecache
+Extra Packages for Enterprise Linux 7 - x86_64   54 kB/s |  16 MB     05:08
+CentOS-7 - Base                                 991 kB/s |  10 MB     00:10
+CentOS-7 - Updates                              1.2 MB/s | 7.0 MB     00:05
+CentOS-7 - Extras                               1.5 MB/s | 251 kB     00:00
+Metadata cache created.
+
+ 
+
+Upgrading CentOS 7 server to Latest Stable Version:
+Our server is now ready to upgrade to CentOS 8.
+
+Execute the following command to update system packages to latest CentOS 7 versions.
+
+[root@centos-7-server ~]# dnf upgrade -y
+Last metadata expiration check: 0:06:17 ago on Fri 17 Jan 2020 09:26:37 PM PKT.
+Dependencies resolved.
+================================================================================
+ Package                Arch       Version                    Repository   Size
+================================================================================
+Upgrading:
+ epel-release           noarch     7-12                       epel         15 k
+ kernel-tools           x86_64     3.10.0-1062.9.1.el7        updates     7.8 M
+ kernel-tools-libs      x86_64     3.10.0-1062.9.1.el7        updates     7.8 M
+ microcode_ctl          x86_64     2:2.1-53.7.el7_7           updates     2.5 M
+ nss                    x86_64     3.44.0-7.el7_7             updates     854 k
+ nss-softokn            x86_64     3.44.0-8.el7_7             updates     330 k
+ nss-softokn-freebl     x86_64     3.44.0-8.el7_7             updates     224 k
+ nss-sysinit            x86_64     3.44.0-7.el7_7             updates      65 k
+ nss-tools              x86_64     3.44.0-7.el7_7             updates     528 k
+ nss-util               x86_64     3.44.0-4.el7_7             updates      79 k
+ open-vm-tools          x86_64     10.3.0-2.el7_7.1           updates     672 k
+ python-perf            x86_64     3.10.0-1062.9.1.el7        updates     7.8 M
+Installing dependencies:
+ kernel                 x86_64     3.10.0-1062.9.1.el7        updates      50 M
+
+Transaction Summary
+================================================================================
+Install   1 Package
+Upgrade  12 Packages
+
+Total download size: 78 M
+Downloading Packages:
+(1/13): epel-release-7-12.noarch.rpm             19 kB/s |  15 kB     00:00
+(2/13): kernel-tools-3.10.0-1062.9.1.el7.x86_64 103 kB/s | 7.8 MB     01:17
+(3/13): kernel-tools-libs-3.10.0-1062.9.1.el7.x 102 kB/s | 7.8 MB     01:17
+(4/13): microcode_ctl-2.1-53.7.el7_7.x86_64.rpm 366 kB/s | 2.5 MB     00:07
+(5/13): nss-softokn-3.44.0-8.el7_7.x86_64.rpm   531 kB/s | 330 kB     00:00
+(6/13): nss-softokn-freebl-3.44.0-8.el7_7.x86_6 498 kB/s | 224 kB     00:00
+(7/13): nss-3.44.0-7.el7_7.x86_64.rpm           113 kB/s | 854 kB     00:07
+(8/13): nss-sysinit-3.44.0-7.el7_7.x86_64.rpm   462 kB/s |  65 kB     00:00
+(9/13): nss-util-3.44.0-4.el7_7.x86_64.rpm      490 kB/s |  79 kB     00:00
+(10/13): open-vm-tools-10.3.0-2.el7_7.1.x86_64. 611 kB/s | 672 kB     00:01
+(11/13): nss-tools-3.44.0-7.el7_7.x86_64.rpm    226 kB/s | 528 kB     00:02
+(12/13): python-perf-3.10.0-1062.9.1.el7.x86_64 592 kB/s | 7.8 MB     00:13
+(13/13): kernel-3.10.0-1062.9.1.el7.x86_64.rpm  403 kB/s |  50 MB     02:06
+--------------------------------------------------------------------------------
+Total                                           626 kB/s |  78 MB     02:08
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1
+  Upgrading        : nss-util-3.44.0-4.el7_7.x86_64                        1/25
+  Running scriptlet: nss-util-3.44.0-4.el7_7.x86_64                        1/25
+  Upgrading        : nss-softokn-freebl-3.44.0-8.el7_7.x86_64              2/25
+  Upgrading        : nss-softokn-3.44.0-8.el7_7.x86_64                     3/25
+  Running scriptlet: nss-softokn-3.44.0-8.el7_7.x86_64                     3/25
+  Upgrading        : nss-sysinit-3.44.0-7.el7_7.x86_64                     4/25
+  Upgrading        : nss-3.44.0-7.el7_7.x86_64                             5/25
+  Running scriptlet: nss-3.44.0-7.el7_7.x86_64                             5/25
+  Upgrading        : kernel-tools-libs-3.10.0-1062.9.1.el7.x86_64          6/25
+  Upgrading        : kernel-tools-3.10.0-1062.9.1.el7.x86_64               7/25
+  Running scriptlet: kernel-tools-3.10.0-1062.9.1.el7.x86_64               7/25
+  Upgrading        : nss-tools-3.44.0-7.el7_7.x86_64                       8/25
+  Upgrading        : python-perf-3.10.0-1062.9.1.el7.x86_64                9/25
+  Upgrading        : open-vm-tools-10.3.0-2.el7_7.1.x86_64                10/25
+  Running scriptlet: open-vm-tools-10.3.0-2.el7_7.1.x86_64                10/25
+  Upgrading        : microcode_ctl-2:2.1-53.7.el7_7.x86_64                11/25
+  Running scriptlet: microcode_ctl-2:2.1-53.7.el7_7.x86_64                11/25
+  Upgrading        : epel-release-7-12.noarch                             12/25
+  Installing       : kernel-3.10.0-1062.9.1.el7.x86_64                    13/25
+  Running scriptlet: kernel-3.10.0-1062.9.1.el7.x86_64                    13/25
+  Running scriptlet: microcode_ctl-2:2.1-53.3.el7_7.x86_64                14/25
+  Cleanup          : microcode_ctl-2:2.1-53.3.el7_7.x86_64                14/25
+  Running scriptlet: microcode_ctl-2:2.1-53.3.el7_7.x86_64                14/25
+  Cleanup          : epel-release-7-11.noarch                             15/25
+  Cleanup          : nss-tools-3.44.0-4.el7.x86_64                        16/25
+  Cleanup          : nss-sysinit-3.44.0-4.el7.x86_64                      17/25
+  Cleanup          : nss-3.44.0-4.el7.x86_64                              18/25
+  Running scriptlet: nss-3.44.0-4.el7.x86_64                              18/25
+  Cleanup          : nss-softokn-3.44.0-5.el7.x86_64                      19/25
+  Running scriptlet: nss-softokn-3.44.0-5.el7.x86_64                      19/25
+  Cleanup          : nss-softokn-freebl-3.44.0-5.el7.x86_64               20/25
+  Cleanup          : kernel-tools-3.10.0-1062.7.1.el7.x86_64              21/25
+  Running scriptlet: kernel-tools-3.10.0-1062.7.1.el7.x86_64              21/25
+  Cleanup          : kernel-tools-libs-3.10.0-1062.7.1.el7.x86_64         22/25
+  Cleanup          : nss-util-3.44.0-3.el7.x86_64                         23/25
+  Running scriptlet: nss-util-3.44.0-3.el7.x86_64                         23/25
+  Cleanup          : python-perf-3.10.0-1062.7.1.el7.x86_64               24/25
+  Running scriptlet: open-vm-tools-10.3.0-2.el7.x86_64                    25/25
+  Cleanup          : open-vm-tools-10.3.0-2.el7.x86_64                    25/25
+  Running scriptlet: open-vm-tools-10.3.0-2.el7.x86_64                    25/25
+  Running scriptlet: microcode_ctl-2:2.1-53.7.el7_7.x86_64                25/25
+  Running scriptlet: kernel-3.10.0-1062.9.1.el7.x86_64                    25/25
+  Verifying        : kernel-3.10.0-1062.9.1.el7.x86_64                     1/25
+  Verifying        : epel-release-7-12.noarch                              2/25
+  Verifying        : epel-release-7-11.noarch                              3/25
+  Verifying        : kernel-tools-3.10.0-1062.9.1.el7.x86_64               4/25
+  Verifying        : kernel-tools-3.10.0-1062.7.1.el7.x86_64               5/25
+  Verifying        : kernel-tools-libs-3.10.0-1062.9.1.el7.x86_64          6/25
+  Verifying        : kernel-tools-libs-3.10.0-1062.7.1.el7.x86_64          7/25
+  Verifying        : microcode_ctl-2:2.1-53.7.el7_7.x86_64                 8/25
+  Verifying        : microcode_ctl-2:2.1-53.3.el7_7.x86_64                 9/25
+  Verifying        : nss-3.44.0-7.el7_7.x86_64                            10/25
+  Verifying        : nss-3.44.0-4.el7.x86_64                              11/25
+  Verifying        : nss-softokn-3.44.0-8.el7_7.x86_64                    12/25
+  Verifying        : nss-softokn-3.44.0-5.el7.x86_64                      13/25
+  Verifying        : nss-softokn-freebl-3.44.0-8.el7_7.x86_64             14/25
+  Verifying        : nss-softokn-freebl-3.44.0-5.el7.x86_64               15/25
+  Verifying        : nss-sysinit-3.44.0-7.el7_7.x86_64                    16/25
+  Verifying        : nss-sysinit-3.44.0-4.el7.x86_64                      17/25
+  Verifying        : nss-tools-3.44.0-7.el7_7.x86_64                      18/25
+  Verifying        : nss-tools-3.44.0-4.el7.x86_64                        19/25
+  Verifying        : nss-util-3.44.0-4.el7_7.x86_64                       20/25
+  Verifying        : nss-util-3.44.0-3.el7.x86_64                         21/25
+  Verifying        : open-vm-tools-10.3.0-2.el7_7.1.x86_64                22/25
+  Verifying        : open-vm-tools-10.3.0-2.el7.x86_64                    23/25
+  Verifying        : python-perf-3.10.0-1062.9.1.el7.x86_64               24/25
+  Verifying        : python-perf-3.10.0-1062.7.1.el7.x86_64               25/25
+
+Upgraded:
+  epel-release-7-12.noarch
+  kernel-tools-3.10.0-1062.9.1.el7.x86_64
+  kernel-tools-libs-3.10.0-1062.9.1.el7.x86_64
+  microcode_ctl-2:2.1-53.7.el7_7.x86_64
+  nss-3.44.0-7.el7_7.x86_64
+  nss-softokn-3.44.0-8.el7_7.x86_64
+  nss-softokn-freebl-3.44.0-8.el7_7.x86_64
+  nss-sysinit-3.44.0-7.el7_7.x86_64
+  nss-tools-3.44.0-7.el7_7.x86_64
+  nss-util-3.44.0-4.el7_7.x86_64
+  open-vm-tools-10.3.0-2.el7_7.1.x86_64
+  python-perf-3.10.0-1062.9.1.el7.x86_64
+
+Installed:
+  kernel-3.10.0-1062.9.1.el7.x86_64
+
+Complete!
+
+ 
+
+Upgrading Yum Repositories from CentOS 7 to CentOS 8:
+To upgrade our yum repositories, we have to upgrade centos-release package from CentOS 7 to CentOS 8.
+
+[root@centos-7-server ~]# dnf upgrade -y http://mirror.centos.org/centos/8/BaseOS/x86_64/os/Packages/{centos-release-8.1-1.1911.0.8.el8.x86_64.rpm,centos-gpg-keys-8.1-1.1911.0.8.el8.noarch.rpm,centos-repos-8.1-1.1911.0.8.el8.x86_64.rpm}
+Last metadata expiration check: 0:11:02 ago on Fri 17 Jan 2020 09:44:30 PM PKT.
+centos-release-8.1-1.1911.0.8.el8.x86_64.rpm     43 kB/s |  21 kB     00:00
+centos-gpg-keys-8.1-1.1911.0.8.el8.noarch.rpm   4.7 kB/s |  11 kB     00:02
+centos-repos-8.1-1.1911.0.8.el8.x86_64.rpm       24 kB/s |  12 kB     00:00
+Package centos-gpg-keys not installed, cannot update it.
+No match for argument: /var/cache/dnf/commandline-5fda33494c9fb882/packages/centos-gpg-keys-8.1-1.1911.0.8.el8.noarch.rpm
+Package centos-repos not installed, cannot update it.
+No match for argument: /var/cache/dnf/commandline-5fda33494c9fb882/packages/centos-repos-8.1-1.1911.0.8.el8.x86_64.rpm
+Dependencies resolved.
+================================================================================
+ Package             Arch       Version                  Repository        Size
+================================================================================
+Upgrading:
+ centos-release      x86_64     8.1-1.1911.0.8.el8       @commandline      21 k
+Installing dependencies:
+ centos-gpg-keys     noarch     8.1-1.1911.0.8.el8       @commandline      11 k
+ centos-repos        x86_64     8.1-1.1911.0.8.el8       @commandline      12 k
+
+Transaction Summary
+================================================================================
+Install  2 Packages
+Upgrade  1 Package
+
+Total size: 44 k
+Downloading Packages:
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1
+  Installing       : centos-gpg-keys-8.1-1.1911.0.8.el8.noarch              1/4
+  Installing       : centos-repos-8.1-1.1911.0.8.el8.x86_64                 2/4
+  Upgrading        : centos-release-8.1-1.1911.0.8.el8.x86_64               3/4
+  Cleanup          : centos-release-7-7.1908.0.el7.centos.x86_64            4/4
+warning: file /etc/yum/vars/infra: remove failed: No such file or directory
+warning: file /etc/yum/vars/contentdir: remove failed: No such file or directory
+
+  Verifying        : centos-gpg-keys-8.1-1.1911.0.8.el8.noarch              1/4
+  Verifying        : centos-repos-8.1-1.1911.0.8.el8.x86_64                 2/4
+  Verifying        : centos-release-8.1-1.1911.0.8.el8.x86_64               3/4
+  Verifying        : centos-release-7-7.1908.0.el7.centos.x86_64            4/4
+
+Upgraded:
+  centos-release-8.1-1.1911.0.8.el8.x86_64
+
+Installed:
+  centos-gpg-keys-8.1-1.1911.0.8.el8.noarch
+  centos-repos-8.1-1.1911.0.8.el8.x86_64
+
+Complete!
+
+Upgrade EPEL yum repository from EL 7 to EL 8.
+
+[root@centos-7-server ~]# dnf upgrade -y epel-release
+Last metadata expiration check: 0:09:31 ago on Fri 17 Jan 2020 10:01:25 PM PKT.
+Dependencies resolved.
+================================================================================
+ Package               Arch            Version            Repository       Size
+================================================================================
+Upgrading:
+ epel-release          noarch          8-5.el8            extras           22 k
+
+Transaction Summary
+================================================================================
+Upgrade  1 Package
+
+Total download size: 22 k
+Downloading Packages:
+epel-release-8-5.el8.noarch.rpm                 241 kB/s |  22 kB     00:00
+--------------------------------------------------------------------------------
+Total                                            34 kB/s |  22 kB     00:00
+warning: /var/cache/dnf/extras-2770d521ba03e231/packages/epel-release-8-5.el8.noarch.rpm: Header V3 RSA/SHA256 Signature, key ID 8483c65d: NOKEY
+CentOS-8 - Extras                               0.0  B/s |   0  B     00:00
+Importing GPG key 0x8483C65D:
+ Userid     : "CentOS (CentOS Official Signing Key) <security@centos.org>"
+ Fingerprint: 99DB 70FA E1D7 CE22 7FB6 4882 05B5 55B3 8483 C65D
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1
+  Upgrading        : epel-release-8-5.el8.noarch                            1/2
+  Cleanup          : epel-release-7-12.noarch                               2/2
+  Verifying        : epel-release-8-5.el8.noarch                            1/2
+  Verifying        : epel-release-7-12.noarch                               2/2
+
+Upgraded:
+  epel-release-8-5.el8.noarch
+
+Complete!
+
+Build cache for all yum repositories.
+
+[root@centos-7-server ~]# dnf makecache
+Extra Packages for Enterprise Linux 8 - x86_64   30 kB/s | 5.2 MB     02:57
+CentOS-8 - Base                                 0.0  B/s |   0  B     00:00
+CentOS-8 - AppStream                            0.0  B/s |   0  B     00:00
+CentOS-8 - Extras                               0.0  B/s |   0  B     00:00
+Metadata cache created.
+
+All of our yum repositories has been upgraded from CentOS 7 to CentOS 8.
+
+ 
+
+Upgrading CentOS 7 to CentOS 8 Server:
+Remove all installed kernels using following command.
+
+[root@centos-7-server ~]# rpm -e `rpm -q kernel`
+
+Removing conflicting packages.
+
+[root@centos-7-server ~]# rpm -e --nodeps sysvinit-tools
+
+Start system upgrade by using following command.
+
+[root@centos-7-server ~]# dnf -y --releasever=8 --allowerasing --setopt=deltarpm=false distro-sync
+...
+  python3-gpg-1.10.0-6.el8.0.1.x86_64
+  python3-hawkey-0.35.1-9.el8_1.x86_64
+  python3-libcomps-0.1.11-2.el8.x86_64
+  python3-libdnf-0.35.1-9.el8_1.x86_64
+  python3-libs-3.6.8-15.1.el8.x86_64
+  python3-libselinux-2.9-2.1.el8.x86_64
+  python3-libxml2-2.9.7-5.el8.x86_64
+  python3-linux-procfs-0.6-7.el8.noarch
+  python3-perf-4.18.0-147.3.1.el8_1.x86_64
+  python3-pip-wheel-9.0.3-15.el8.noarch
+  python3-pyudev-0.21.0-7.el8.noarch
+  python3-rpm-4.14.2-25.el8.x86_64
+  python3-schedutils-0.6-6.el8.x86_64
+  python3-setuptools-wheel-39.2.0-5.el8.noarch
+  python3-six-1.11.0-8.el8.noarch
+  python3-slip-0.6.4-11.el8.noarch
+  python3-slip-dbus-0.6.4-11.el8.noarch
+  python3-syspurpose-1.25.17-1.el8.x86_64
+  readonly-root-10.00.4-1.el8.noarch
+  rpm-plugin-selinux-4.14.2-25.el8.x86_64
+  sqlite-libs-3.26.0-3.el8.x86_64
+  squashfs-tools-4.3-19.el8.x86_64
+  systemd-container-239-18.el8_1.1.x86_64
+  systemd-pam-239-18.el8_1.1.x86_64
+  systemd-udev-239-18.el8_1.1.x86_64
+  trousers-lib-0.3.14-4.el8.x86_64
+  authselect-compat-1.1-2.el8.x86_64
+  centos-logos-httpd-80.5-2.el8.noarch
+  compat-openssl10-1:1.0.2o-3.el8.x86_64
+  httpd-filesystem-2.4.37-16.module_el8.1.0+256+ae790463.noarch
+  mariadb-common-3:10.3.17-1.module_el8.1.0+257+48736ea6.x86_64
+  mariadb-connector-c-3.0.7-1.el8.x86_64
+  mariadb-connector-c-config-3.0.7-1.el8.noarch
+  mariadb-errmsg-3:10.3.17-1.module_el8.1.0+257+48736ea6.x86_64
+  mod_http2-1.11.3-3.module_el8.1.0+213+acce2796.x86_64
+  nginx-filesystem-1:1.14.1-9.module_el8.0.0+184+e34fea82.noarch
+  oddjob-0.34.4-7.el8.x86_64
+  perl-Digest-1.17-395.el8.noarch
+  perl-Digest-MD5-2.55-396.el8.x86_64
+  perl-Net-SSLeay-1.88-1.el8.x86_64
+  perl-URI-1.73-3.el8.noarch
+  perl-libnet-3.11-3.el8.noarch
+  python2-2.7.16-12.module_el8.1.0+219+cf9e6ac9.x86_64
+  python2-libs-2.7.16-12.module_el8.1.0+219+cf9e6ac9.x86_64
+  python2-pip-wheel-9.0.3-14.module_el8.1.0+219+cf9e6ac9.noarch
+  python2-setuptools-wheel-39.0.1-11.module_el8.1.0+219+cf9e6ac9.noarch
+  unbound-libs-1.7.3-8.el8.x86_64
+  xkeyboard-config-2.24-3.el8.noarch
+
+Removed:
+  deltarpm-3.6-3.el7.x86_64
+  libselinux-python-2.5-14.1.el7.x86_64
+  libxml2-python-2.9.1-6.el7_2.3.x86_64
+  newt-python-0.52.15-4.el7.x86_64
+  perl-Net-Daemon-0.48-5.el7.noarch
+  perl-PlRPC-0.2020-14.el7.noarch
+  python-2.7.5-86.el7.x86_64
+  python-chardet-2.2.1-3.el7.noarch
+  python-firewall-0.6.3-2.el7_7.2.noarch
+  python-kitchen-1.1.1-5.el7.noarch
+  python-libs-2.7.5-86.el7.x86_64
+  python-linux-procfs-0.4.11-4.el7.noarch
+  python-schedutils-0.4-6.el7.x86_64
+  python-slip-0.4.0-4.el7.noarch
+  python-slip-dbus-0.4.0-4.el7.noarch
+  python-urlgrabber-3.10-9.el7.noarch
+  python2-dnf-4.0.9.2-1.el7_6.noarch
+  python2-hawkey-0.22.5-1.el7_6.x86_64
+  python2-libcomps-0.1.8-12.el7.x86_64
+  python2-libdnf-0.22.5-1.el7_6.x86_64
+  pyxattr-0.5.1-5.el7.x86_64
+  rpm-python-4.11.3-40.el7.x86_64
+  systemd-sysv-219-67.el7_7.2.x86_64
+
+Complete!
+
+Install new CentOS 8 kernel core.
+
+[root@centos-7-server ~]# dnf install -y kernel-core
+Extra Packages for Enterprise Linux Modular 8 - 2.5 kB/s |  10 kB     00:04
+Dependencies resolved.
+================================================================================
+ Package           Architecture Version                      Repository    Size
+================================================================================
+Installing:
+ kernel-core       x86_64       4.18.0-147.3.1.el8_1         BaseOS        25 M
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 25 M
+Installed size: 58 M
+Downloading Packages:
+kernel-core-4.18.0-147.3.1.el8_1.x86_64.rpm     660 kB/s |  25 MB     00:39
+--------------------------------------------------------------------------------
+Total                                           649 kB/s |  25 MB     00:40
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1
+  Installing       : kernel-core-4.18.0-147.3.1.el8_1.x86_64                1/1
+  Running scriptlet: kernel-core-4.18.0-147.3.1.el8_1.x86_64                1/1
+  Verifying        : kernel-core-4.18.0-147.3.1.el8_1.x86_64                1/1
+
+Installed:
+  kernel-core-4.18.0-147.3.1.el8_1.x86_64
+
+Complete!
+
+Install Minimal and Core package groups on the server.
+
+[root@centos-7-server ~]# dnf -y groupupdate "Core" "Minimal Install"
+...
+Installed:
+  dnf-plugin-spacewalk-2.8.5-11.module_el8.1.0+211+ad6c0bc7.noarch
+  dnf-plugins-core-4.0.8-3.el8.noarch
+  libsysfs-2.1.0-24.el8.x86_64
+  prefixdevname-0.1.0-6.el8.x86_64
+  rng-tools-6.6-2.el8.x86_64
+  sssd-common-2.2.0-19.el8.x86_64
+  sssd-kcm-2.2.0-19.el8.x86_64
+  yum-4.2.7-7.el8_1.noarch
+  libsss_autofs-2.2.0-19.el8.x86_64
+  libsss_sudo-2.2.0-19.el8.x86_64
+  sssd-nfs-idmap-2.2.0-19.el8.x86_64
+  python3-dnf-plugin-spacewalk-2.8.5-11.module_el8.1.0+211+ad6c0bc7.noarch
+  python3-hwdata-2.3.6-3.el8.noarch
+  python3-netifaces-0.10.6-4.el8.x86_64
+  python3-newt-0.52.20-9.el8.x86_64
+  python3-pyOpenSSL-18.0.0-1.el8.noarch
+  python3-rhn-client-tools-2.8.16-13.module_el8.1.0+211+ad6c0bc7.x86_64
+  python3-rhnlib-2.8.6-8.module_el8.1.0+211+ad6c0bc7.noarch
+  rhn-client-tools-2.8.16-13.module_el8.1.0+211+ad6c0bc7.x86_64
+  c-ares-1.13.0-5.el8.x86_64
+  libbasicobjects-0.1.1-39.el8.x86_64
+  libcollection-0.7.0-39.el8.x86_64
+  libdhash-0.5.0-39.el8.x86_64
+  libgudev-232-4.el8.x86_64
+  libini_config-1.3.1-39.el8.x86_64
+  libldb-1.5.4-2.el8.x86_64
+  libnfsidmap-1:2.3.3-26.el8.x86_64
+  libpath_utils-0.2.1-39.el8.x86_64
+  libref_array-0.1.5-39.el8.x86_64
+  libsss_certmap-2.2.0-19.el8.x86_64
+  libsss_idmap-2.2.0-19.el8.x86_64
+  libsss_nss_idmap-2.2.0-19.el8.x86_64
+  libtalloc-2.1.16-3.el8.x86_64
+  libtdb-1.3.18-2.el8.x86_64
+  libtevent-0.9.39-2.el8.x86_64
+  python3-asn1crypto-0.24.0-3.el8.noarch
+  python3-cffi-1.11.5-5.el8.x86_64
+  python3-cryptography-2.3-2.el8.x86_64
+  python3-dateutil-1:2.6.1-6.el8.noarch
+  python3-dnf-plugins-core-4.0.8-3.el8.noarch
+  python3-idna-2.5-5.el8.noarch
+  python3-librepo-1.10.3-3.el8.x86_64
+  python3-ply-3.9-7.el8.noarch
+  python3-pycparser-2.14-14.el8.noarch
+  sssd-client-2.2.0-19.el8.x86_64
+
+Complete!
+
+Reboot server to load new Linux Kernel.
+
+[root@centos-7-server ~]# systemctl reboot
+
+ 
+
+Verify Software Versions after Upgrade to CentOS 8:
+After reboot, check version of installed Linux Kernel.
+
+[root@centos-7-server ~]# uname -r
+4.18.0-147.3.1.el8_1.x86_64
+
+Check version of installed Apache HTTP Server.
+
+[root@centos-7-server ~]# httpd -v
+Server version: Apache/2.4.37 (centos)
+Server built:   Dec 23 2019 20:45:34
+
+Check version of installed PHP.
+
+[root@centos-7-server ~]# php -v
+PHP 7.2.11 (cli) (built: Oct  9 2018 15:09:36) ( NTS )
+Copyright (c) 1997-2018 The PHP Group
+Zend Engine v3.2.0, Copyright (c) 1998-2018 Zend Technologies
+
+Check version of installed MariaDB server.
+
+[root@centos-7-server ~]# mysql -V
+mysql  Ver 15.1 Distrib 10.3.17-MariaDB, for Linux (x86_64) using readline 5.1
+
+Open URL http://centos-7-server.sysadminlabs.com in a browser.
+
+02-upgrade-centos-7-to-8-phpinfo-7
+
+We have successfully upgraded our CentOS 7 server to CentOS 8 alongwith all the installed databases and applications.
